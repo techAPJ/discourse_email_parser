@@ -1,8 +1,6 @@
 require 'strscan'
 
-# https://github.com/github/email_reply_parser/blob/master/lib/email_reply_parser.rb
-#
-# DiscourseEmailParser is a small library to parse plain text email content.  The
+# EmailReplyParser is a small library to parse plain text email content.  The
 # goal is to identify which fragments are quoted, part of a signature, or
 # original body content.  We want to support both top and bottom posters, so
 # no simple "REPLY ABOVE HERE" content is used.
@@ -27,12 +25,12 @@ require 'strscan'
 #
 # Each of these are parsed into Fragment objects.
 #
-# DiscourseEmailParser also attempts to figure out which of these blocks should
+# EmailReplyParser also attempts to figure out which of these blocks should
 # be hidden from users.
 #
 # [mail]: https://github.com/mikel/mail
-class DiscourseEmailParser
-  VERSION = "0.6.0"
+class EmailReplyParser
+  VERSION = "0.5.8"
 
   # Public: Splits an email body into a list of Fragments.
   #
@@ -91,12 +89,6 @@ class DiscourseEmailParser
         text.gsub! $1, $1.gsub("\n", " ")
       end
 
-      # Check for "---- Original Message ----"
-      # and strip email content after that part
-      if text =~ /^([\s_-]+Original (?i)message?[\s_-]+$.*)/nm
-        text.gsub!($1, "")
-      end
-
       # Some users may reply directly above a line of underscores.
       # In order to ensure that these fragments are split correctly,
       # make sure that all lines of underscores are preceded by
@@ -141,7 +133,7 @@ class DiscourseEmailParser
 
   private
     EMPTY = "".freeze
-    SIGNATURE = '(?m)(--\s*$|__\s*$)|(^(\w+\s*){1,3} ym morf tneS$)'
+    SIGNATURE = '(?m)(--\s*$|__\s*$|\w-$)|(^(\w+\s*){1,3} ym morf tneS$)'
 
     begin
       require 're2'

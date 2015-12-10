@@ -4,11 +4,11 @@ require 'pathname'
 require 'pp'
 
 dir = Pathname.new File.expand_path(File.dirname(__FILE__))
-require dir + '..' + 'lib' + 'discourse_email_parser'
+require dir + '..' + 'lib' + 'email_reply_parser'
 
 EMAIL_FIXTURE_PATH = dir + 'emails'
 
-class DiscourseEmailParserTest < Test::Unit::TestCase
+class EmailReplyParserTest < Test::Unit::TestCase
   def test_reads_simple_body
     reply = email(:email_1_1)
     assert_equal 3, reply.fragments.size
@@ -25,7 +25,7 @@ What is the best way to clear a Riak bucket of all key, values after
 running a test?
 I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
 
-    assert_equal "--Abhishek Kona\n\n", reply.fragments[1].to_s
+    assert_equal "-Abhishek Kona\n\n", reply.fragments[1].to_s
   end
 
   def test_reads_top_post
@@ -40,7 +40,7 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
       reply.fragments.map { |f| f.signature? }
 
     assert_match /^Oh thanks.\n\nHaving/, reply.fragments[0].to_s
-    assert_match /^--A/, reply.fragments[1].to_s
+    assert_match /^-A/, reply.fragments[1].to_s
     assert_match /^On [^\:]+\:/, reply.fragments[2].to_s
     assert_match /^_/, reply.fragments[4].to_s
   end
@@ -125,7 +125,7 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
 
   def test_does_not_modify_input_string
     original = "The Quick Brown Fox Jumps Over The Lazy Dog"
-    DiscourseEmailParser.read original
+    EmailReplyParser.read original
     assert_equal "The Quick Brown Fox Jumps Over The Lazy Dog", original
   end
 
@@ -136,43 +136,43 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
 
   def test_parse_out_just_top_for_outlook_reply
     body = IO.read EMAIL_FIXTURE_PATH.join("email_2_1.txt").to_s
-    assert_equal "Outlook with a reply", DiscourseEmailParser.parse_reply(body)
+    assert_equal "Outlook with a reply", EmailReplyParser.parse_reply(body)
   end
 
   def test_parse_out_just_top_for_outlook_with_reply_directly_above_line
     body = IO.read EMAIL_FIXTURE_PATH.join("email_2_2.txt").to_s
-    assert_equal "Outlook with a reply directly above line", DiscourseEmailParser.parse_reply(body)
+    assert_equal "Outlook with a reply directly above line", EmailReplyParser.parse_reply(body)
   end
 
   def test_parse_out_sent_from_iPhone
     body = IO.read EMAIL_FIXTURE_PATH.join("email_iPhone.txt").to_s
-    assert_equal "Here is another email", DiscourseEmailParser.parse_reply(body)
+    assert_equal "Here is another email", EmailReplyParser.parse_reply(body)
   end
 
   def test_parse_out_sent_from_BlackBerry
     body = IO.read EMAIL_FIXTURE_PATH.join("email_BlackBerry.txt").to_s
-    assert_equal "Here is another email", DiscourseEmailParser.parse_reply(body)
+    assert_equal "Here is another email", EmailReplyParser.parse_reply(body)
   end
 
   def test_parse_out_send_from_multiword_mobile_device
     body = IO.read EMAIL_FIXTURE_PATH.join("email_multi_word_sent_from_my_mobile_device.txt").to_s
-    assert_equal "Here is another email", DiscourseEmailParser.parse_reply(body)
+    assert_equal "Here is another email", EmailReplyParser.parse_reply(body)
   end
 
   def test_do_not_parse_out_send_from_in_regular_sentence
     body = IO.read EMAIL_FIXTURE_PATH.join("email_sent_from_my_not_signature.txt").to_s
-    assert_equal "Here is another email\n\nSent from my desk, is much easier then my mobile phone.", DiscourseEmailParser.parse_reply(body)
+    assert_equal "Here is another email\n\nSent from my desk, is much easier then my mobile phone.", EmailReplyParser.parse_reply(body)
   end
 
   def test_retains_bullets
     body = IO.read EMAIL_FIXTURE_PATH.join("email_bullets.txt").to_s
     assert_equal "test 2 this should list second\n\nand have spaces\n\nand retain this formatting\n\n\n   - how about bullets\n   - and another",
-      DiscourseEmailParser.parse_reply(body)
+      EmailReplyParser.parse_reply(body)
   end
 
   def test_parse_reply
     body = IO.read EMAIL_FIXTURE_PATH.join("email_1_2.txt").to_s
-    assert_equal DiscourseEmailParser.read(body).visible_text, DiscourseEmailParser.parse_reply(body)
+    assert_equal EmailReplyParser.read(body).visible_text, EmailReplyParser.parse_reply(body)
   end
 
   def test_one_is_not_on
@@ -190,11 +190,11 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
     assert_equal [false, true, true], reply.fragments.map { |f| f.hidden? }
   end
 
-  # def test_pathological_emails
-  #   t0 = Time.now
-  #   reply = email("pathological")
-  #   assert (Time.now - t0) < 1, "Took too long, upgrade to re2 gem."
-  # end
+  def test_pathological_emails
+    t0 = Time.now
+    reply = email("pathological")
+    assert (Time.now - t0) < 1, "Took too long, upgrade to re2 gem."
+  end
 
   def test_doesnt_remove_signature_delimiter_in_mid_line
     reply = email(:email_sig_delimiter_in_middle_of_line)
@@ -203,6 +203,6 @@ I am currently using the Java HTTP API.\n", reply.fragments[0].to_s
 
   def email(name)
     body = IO.read EMAIL_FIXTURE_PATH.join("#{name}.txt").to_s
-    DiscourseEmailParser.read body
+    EmailReplyParser.read body
   end
 end
